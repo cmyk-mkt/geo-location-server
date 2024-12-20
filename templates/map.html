@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polígonos no Mapa</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        #map { height: 100vh; }
+    </style>
+</head>
+<body>
+    <!-- <h1>Visualizar Polígonos</h1> -->
+    <div id="map"></div>
+    <script>
+        const poligonos = JSON.parse(`{{ poligonos | tojson | safe }}`);
+
+        const map = L.map('map').setView([-27.611684, -48.581716], 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        poligonos.forEach(poligono => {
+            const coords = poligono.coordenadas.map(coord => [coord[0], coord[1]]);
+            L.polygon(coords, { color: poligono.cor }).addTo(map)
+                .bindPopup(`Polígono: ${poligono.nome}`);
+        });
+    </script>
+</body>
+</html>
