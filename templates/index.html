@@ -3,14 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polígonos no Mapa</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <style>
-        #map { height: 100vh; }
-    </style>
+    <title>Verificar Ponto</title>
+    <script>
+        async function verificarPonto(event) {
+            event.preventDefault();
+
+            const pontoId = document.getElementById('ponto-id').value;
+            const latitude = parseFloat(document.getElementById('latitude').value);
+            const longitude = parseFloat(document.getElementById('longitude').value);
+
+            if (!pontoId || isNaN(latitude) || isNaN(longitude)) {
+                alert("Por favor, preencha todos os campos corretamente.");
+                return;
+            }
+
+            const pontoTeste = { ID: pontoId, ponto_teste: [latitude, longitude] };
+
+            try {
+                const response = await fetch('/verificar-ponto', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(pontoTeste),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('resultado').textContent = `Resultado: 
+                        ID: ${result.ID}, 
+                        Ponto: ${result.ponto_teste}, 
+                        Status: ${result.status}, 
+                        Polígono: ${result.poligono || "Nenhum"}`;
+                } else {
+                    document.getElementById('resultado').textContent = `Erro: ${result.error}`;
+                }
+            } catch (error) {
+                document.getElementById('resultado').textContent = `Erro na solicitação: ${error.message}`;
+            }
+        }
+    </script>
 </head>
 <body>
-    <h1>Flesk server on....</h1>   
+    <h1>Verificar Ponto nos Polígonos</h1>
+    <form onsubmit="verificarPonto(event)">
+        <label for="ponto-id">ID:</label>
+        <input type="text" id="ponto-id" placeholder="ID do ponto" required><br><br>
+
+        <label for="latitude">Latitude:</label>
+        <input type="text" id="latitude" placeholder="Ex.: -27.611684" required><br><br>
+
+        <label for="longitude">Longitude:</label>
+        <input type="text" id="longitude" placeholder="Ex.: -48.581716" required><br><br>
+
+        <button type="submit">Verificar</button>
+    </form>
+
+    <h2 id="resultado">Resultado aparecerá aqui</h2>
 </body>
 </html>
