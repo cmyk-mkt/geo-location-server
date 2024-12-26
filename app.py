@@ -44,7 +44,7 @@ def verificar_ponto():
         "ID": ponto_id,
         "ponto_teste": ponto_teste,
         "status": "OUT",
-        "poligono": None
+        "poligono": "null"
     })
 
 @app.route('/visualizar-poligonos')
