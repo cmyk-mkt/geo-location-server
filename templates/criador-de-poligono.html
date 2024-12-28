@@ -87,12 +87,13 @@
                 if (!response.ok) {
                     throw new Error("Erro ao carregar os polígonos.");
                 }
-        
+    
                 const poligonos = await response.json();
                 poligonosLayer.clearLayers(); // Limpa polígonos anteriores
-        
+    
                 poligonos.forEach(poligono => {
-                    const coords = JSON.parse(poligono.coordenadas); // `coordenadas` já é JSON válido
+                    // As coordenadas já vêm no formato correto
+                    const coords = poligono.coordenadas.map(coord => [coord[0], coord[1]]);
                     L.polygon(coords, { color: poligono.cor }).addTo(poligonosLayer);
                 });
             } catch (error) {
