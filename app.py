@@ -51,5 +51,10 @@ def verificar_ponto():
 def visualizar_poligonos():
     return render_template('map.html', poligonos=poligonos)
 
+@app.route('/criador-de-poligono')
+def criador_de_poligono():
+    return render_template('criador-de-poligono.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
