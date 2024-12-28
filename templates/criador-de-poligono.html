@@ -81,25 +81,25 @@
             textarea.value = ""; // Limpa o conteúdo do textarea
         }
 
-        // Função para buscar e plotar polígonos do CSV
         async function atualizarPoligonos() {
             try {
                 const response = await fetch('/get-poligonos');
                 if (!response.ok) {
                     throw new Error("Erro ao carregar os polígonos.");
                 }
-
+        
                 const poligonos = await response.json();
                 poligonosLayer.clearLayers(); // Limpa polígonos anteriores
-
+        
                 poligonos.forEach(poligono => {
-                    const coords = JSON.parse(poligono.coordenadas).map(coord => [coord[0], coord[1]]);
+                    const coords = JSON.parse(poligono.coordenadas); // `coordenadas` já é JSON válido
                     L.polygon(coords, { color: poligono.cor }).addTo(poligonosLayer);
                 });
             } catch (error) {
                 alert("Erro: " + error.message);
             }
         }
+
     </script>
 </body>
 </html>
