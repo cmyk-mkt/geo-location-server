@@ -62,14 +62,17 @@ def get_poligonos():
         with open('poligonos.csv', 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
+                # Converter as coordenadas do formato string para lista de listas
+                coordenadas = eval(row["coordenadas"])  # Mantém compatibilidade com o formato atual
                 poligonos.append({
                     "nome": row["nome"],
-                    "coordenadas": row["coordenadas"],
+                    "coordenadas": coordenadas,  # Enviar como lista de listas
                     "cor": row["cor"]
                 })
         return jsonify(poligonos)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 
 if __name__ == '__main__':
