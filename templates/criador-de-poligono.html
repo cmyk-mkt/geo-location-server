@@ -44,6 +44,7 @@
     <textarea id="coordenadas" placeholder="As coordenadas do polígono aparecerão aqui"></textarea><br>
 
     <button onclick="limparCoordenadas()">Limpar Coordenadas</button>
+    <button onclick="atualizarPoligonos()">Atualizar</button>
 
     <div id="map"></div>
 
@@ -58,6 +59,7 @@
         const textarea = document.getElementById('coordenadas');
         const nomeInput = document.getElementById('nome-poligono');
         const corSelect = document.getElementById('cor-poligono');
+        const poligonosLayer = L.layerGroup().addTo(map);
 
         // Evento de clique no mapa
         map.on('click', function (e) {
@@ -77,6 +79,26 @@
         function limparCoordenadas() {
             coordenadas.length = 0; // Limpa o array de coordenadas
             textarea.value = ""; // Limpa o conteúdo do textarea
+        }
+
+        // Função para buscar e plotar polígonos do CSV
+        async function atualizarPoligonos() {
+            try {
+                const response = await fetch('/get-poligonos');
+                if (!response.ok) {
+                    throw new Error("Erro ao carregar os polígonos.");
+                }
+
+                const poligonos = await response.json();
+                poligonosLayer.clearLayers(); // Limpa polígonos anteriores
+
+                poligonos.forEach(poligono => {
+                    const coords = JSON.parse(poligono.coordenadas).map(coord => [coord[0], coord[1]]);
+                    L.polygon(coords, { color: poligono.cor }).addTo(poligonosLayer);
+                });
+            } catch (error) {
+                alert("Erro: " + error.message);
+            }
         }
     </script>
 </body>
