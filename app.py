@@ -55,6 +55,22 @@ def visualizar_poligonos():
 def criador_de_poligono():
     return render_template('criador-de-poligono.html')
 
+@app.route('/get-poligonos', methods=['GET'])
+def get_poligonos():
+    try:
+        poligonos = []
+        with open('poligonos.csv', 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                poligonos.append({
+                    "nome": row["nome"],
+                    "coordenadas": row["coordenadas"],
+                    "cor": row["cor"]
+                })
+        return jsonify(poligonos)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
