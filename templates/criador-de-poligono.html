@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criador de Polígono</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+        select, input, button {
+            margin: 10px 0;
+            padding: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Criador de Polígono</h1>
+    <label for="nome-poligono">Nome do Polígono:</label>
+    <input type="text" id="nome-poligono" placeholder="Digite o nome do polígono" /><br>
+
+    <label for="cor-poligono">Cor do Polígono:</label>
+    <select id="cor-poligono">
+        <option value="red">Red</option>
+        <option value="blue">Blue</option>
+        <option value="green">Green</option>
+        <option value="yellow">Yellow</option>
+        <option value="purple">Purple</option>
+    </select><br>
+
+    <label for="coordenadas">Polígono:</label>
+    <textarea id="coordenadas" placeholder="As coordenadas do polígono aparecerão aqui"></textarea><br>
+
+    <button onclick="limparCoordenadas()">Limpar Coordenadas</button>
+
+    <div id="map"></div>
+
+    <script>
+        // Inicialização do mapa
+        const map = L.map('map').setView([-27.611684, -48.581716], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const coordenadas = [];
+        const textarea = document.getElementById('coordenadas');
+        const nomeInput = document.getElementById('nome-poligono');
+        const corSelect = document.getElementById('cor-poligono');
+
+        // Evento de clique no mapa
+        map.on('click', function (e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            // Adiciona a coordenada ao array
+            coordenadas.push([lat, lng]);
+
+            // Atualiza o textarea com o formato esperado
+            const nome = nomeInput.value || "sem_nome";
+            const cor = corSelect.value || "black";
+            textarea.value = `${nome},"[${coordenadas.map(c => `(${c[0]}, ${c[1]})`).join(", ")}]",${cor}`;
+        });
+
+        // Função para limpar as coordenadas
+        function limparCoordenadas() {
+            coordenadas.length = 0; // Limpa o array de coordenadas
+            textarea.value = ""; // Limpa o conteúdo do textarea
+        }
+    </script>
+</body>
+</html>
