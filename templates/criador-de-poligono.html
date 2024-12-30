@@ -49,6 +49,26 @@
         let coordenadas = [];
         let poligonoLayer = null;
 
+        // Função para carregar e exibir os polígonos do CSV
+        async function carregarPoligonos() {
+            try {
+                const response = await fetch('/get-poligonos');
+                if (!response.ok) throw new Error('Erro ao carregar os polígonos.');
+
+                const poligonos = await response.json();
+                poligonos.forEach(poligono => {
+                    const coords = JSON.parse(poligono.coordenadas.replace(/\(/g, '[').replace(/\)/g, ']'));
+                    L.polygon(coords, { color: poligono.cor }).addTo(map)
+                        .bindPopup(`<strong>${poligono.nome}</strong>`);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar polígonos:', error.message);
+            }
+        }
+
+        // Carregar os polígonos ao carregar a página
+        carregarPoligonos();
+
         // Atualiza o textarea e o mapa quando o usuário clica
         map.on('click', function (e) {
             const { lat, lng } = e.latlng;
