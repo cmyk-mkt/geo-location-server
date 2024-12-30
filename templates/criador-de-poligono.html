@@ -24,11 +24,16 @@
     <br>
     <label for="cor">Cor do Polígono:</label>
     <select id="cor">
-        <option value="red">Vermelho</option>
-        <option value="blue">Azul</option>
-        <option value="green">Verde</option>
-        <option value="yellow">Amarelo</option>
-        <option value="purple">Roxo</option>
+        <option value="red">Red</option>
+        <option value="blue">Blue</option>
+        <option value="green">Green</option>
+        <option value="yellow">Yellow</option>
+        <option value="purple">Purple</option>
+        <option value="orange">Orange</option>
+        <option value="pink">Pink</option>
+        <option value="brown">Brown</option>
+        <option value="gray">Gray</option>
+        <option value="black">Black</option>
     </select>
     <br>
     <button id="atualizarPoligono">Atualizar Polígono</button>
@@ -49,14 +54,16 @@
             const { lat, lng } = e.latlng;
             coordenadas.push([lat, lng]);
 
-            // Atualiza o textarea com as coordenadas
-            document.getElementById('coordenadas').value = JSON.stringify(coordenadas);
+            // Gera o formato padrão do CSV no textarea
+            const nome = document.getElementById('nome').value || 'Sem Nome';
+            const cor = document.getElementById('cor').value;
+            const coordenadasString = coordenadas.map(coord => `(${coord[0].toFixed(6)}, ${coord[1].toFixed(6)})`);
+            document.getElementById('coordenadas').value = `${nome},"[${coordenadasString.join(', ')}]",${cor}`;
 
             // Atualiza o polígono no mapa
             if (poligonoLayer) {
                 map.removeLayer(poligonoLayer);
             }
-            const cor = document.getElementById('cor').value;
             poligonoLayer = L.polygon(coordenadas, { color: cor }).addTo(map);
         });
 
@@ -64,6 +71,7 @@
         document.getElementById('limparPoligono').addEventListener('click', () => {
             coordenadas = [];
             document.getElementById('coordenadas').value = '';
+            document.getElementById('nome').value = '';
             if (poligonoLayer) {
                 map.removeLayer(poligonoLayer);
                 poligonoLayer = null;
@@ -74,7 +82,17 @@
         document.getElementById('atualizarPoligono').addEventListener('click', () => {
             const cor = document.getElementById('cor').value;
             try {
-                coordenadas = JSON.parse(document.getElementById('coordenadas').value);
+                const textareaValue = document.getElementById('coordenadas').value;
+
+                // Extrair coordenadas do formato do CSV
+                const match = textareaValue.match(/"\[(.*?)\]"/);
+                if (!match) throw new Error('Formato inválido no textarea.');
+
+                const coordsString = match[1];
+                coordenadas = coordsString.split('), ').map(coord => {
+                    const [lat, lng] = coord.replace('(', '').replace(')', '').split(', ').map(Number);
+                    return [lat, lng];
+                });
 
                 if (poligonoLayer) {
                     map.removeLayer(poligonoLayer);
@@ -82,7 +100,7 @@
 
                 poligonoLayer = L.polygon(coordenadas, { color: cor }).addTo(map);
             } catch (error) {
-                alert('Coordenadas inválidas! Certifique-se de que estejam no formato correto.');
+                alert('Erro: ' + error.message);
             }
         });
     </script>
