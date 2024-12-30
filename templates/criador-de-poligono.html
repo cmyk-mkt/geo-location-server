@@ -9,98 +9,82 @@
     <style>
         #map {
             height: 500px;
-            width: 100%;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        textarea {
-            width: 100%;
-            height: 100px;
-        }
-        select, input, button {
-            margin: 10px 0;
-            padding: 5px;
-            font-size: 16px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
     <h1>Criador de Polígono</h1>
-    <label for="nome-poligono">Nome do Polígono:</label>
-    <input type="text" id="nome-poligono" placeholder="Digite o nome do polígono" /><br>
-
-    <label for="cor-poligono">Cor do Polígono:</label>
-    <select id="cor-poligono">
-        <option value="red">Red</option>
-        <option value="blue">Blue</option>
-        <option value="green">Green</option>
-        <option value="yellow">Yellow</option>
-        <option value="purple">Purple</option>
-    </select><br>
-
-    <label for="coordenadas">Polígono:</label>
-    <textarea id="coordenadas" placeholder="As coordenadas do polígono aparecerão aqui"></textarea><br>
-
-    <button onclick="limparCoordenadas()">Limpar Coordenadas</button>
-    <button onclick="atualizarPoligonos()">Atualizar</button>
-
     <div id="map"></div>
+    <label for="nome">Nome do Polígono:</label>
+    <input type="text" id="nome" placeholder="Digite o nome do polígono">
+    <br>
+    <label for="coordenadas">Coordenadas:</label>
+    <textarea id="coordenadas" rows="5" cols="50" placeholder="Clique no mapa para gerar as coordenadas..."></textarea>
+    <br>
+    <label for="cor">Cor do Polígono:</label>
+    <select id="cor">
+        <option value="red">Vermelho</option>
+        <option value="blue">Azul</option>
+        <option value="green">Verde</option>
+        <option value="yellow">Amarelo</option>
+        <option value="purple">Roxo</option>
+    </select>
+    <br>
+    <button id="atualizarPoligono">Atualizar Polígono</button>
+    <button id="limparPoligono">Limpar Polígono</button>
 
     <script>
-        // Inicialização do mapa
+        // Inicializa o mapa
         const map = L.map('map').setView([-27.611684, -48.581716], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
-        const coordenadas = [];
-        const textarea = document.getElementById('coordenadas');
-        const nomeInput = document.getElementById('nome-poligono');
-        const corSelect = document.getElementById('cor-poligono');
-        const poligonosLayer = L.layerGroup().addTo(map);
+        let coordenadas = [];
+        let poligonoLayer = null;
 
-        // Evento de clique no mapa
+        // Atualiza o textarea e o mapa quando o usuário clica
         map.on('click', function (e) {
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
-
-            // Adiciona a coordenada ao array
+            const { lat, lng } = e.latlng;
             coordenadas.push([lat, lng]);
 
-            // Atualiza o textarea com o formato esperado
-            const nome = nomeInput.value || "sem_nome";
-            const cor = corSelect.value || "black";
-            textarea.value = `${nome},"[${coordenadas.map(c => `(${c[0]}, ${c[1]})`).join(", ")}]",${cor}`;
+            // Atualiza o textarea com as coordenadas
+            document.getElementById('coordenadas').value = JSON.stringify(coordenadas);
+
+            // Atualiza o polígono no mapa
+            if (poligonoLayer) {
+                map.removeLayer(poligonoLayer);
+            }
+            const cor = document.getElementById('cor').value;
+            poligonoLayer = L.polygon(coordenadas, { color: cor }).addTo(map);
         });
 
-        // Função para limpar as coordenadas
-        function limparCoordenadas() {
-            coordenadas.length = 0; // Limpa o array de coordenadas
-            textarea.value = ""; // Limpa o conteúdo do textarea
-        }
-
-        async function atualizarPoligonos() {
-            try {
-                const response = await fetch('/get-poligonos');
-                if (!response.ok) {
-                    throw new Error("Erro ao carregar os polígonos.");
-                }
-    
-                const poligonos = await response.json();
-                poligonosLayer.clearLayers(); // Limpa polígonos anteriores
-    
-                poligonos.forEach(poligono => {
-                    // As coordenadas já vêm no formato correto
-                    const coords = poligono.coordenadas.map(coord => [coord[0], coord[1]]);
-                    L.polygon(coords, { color: poligono.cor }).addTo(poligonosLayer);
-                });
-            } catch (error) {
-                alert("Erro: " + error.message);
+        // Botão para limpar o polígono
+        document.getElementById('limparPoligono').addEventListener('click', () => {
+            coordenadas = [];
+            document.getElementById('coordenadas').value = '';
+            if (poligonoLayer) {
+                map.removeLayer(poligonoLayer);
+                poligonoLayer = null;
             }
-        }
+        });
 
+        // Botão para atualizar o polígono (caso o usuário mude a cor ou edite manualmente)
+        document.getElementById('atualizarPoligono').addEventListener('click', () => {
+            const cor = document.getElementById('cor').value;
+            try {
+                coordenadas = JSON.parse(document.getElementById('coordenadas').value);
+
+                if (poligonoLayer) {
+                    map.removeLayer(poligonoLayer);
+                }
+
+                poligonoLayer = L.polygon(coordenadas, { color: cor }).addTo(map);
+            } catch (error) {
+                alert('Coordenadas inválidas! Certifique-se de que estejam no formato correto.');
+            }
+        });
     </script>
 </body>
 </html>
