@@ -1,8 +1,14 @@
+import os
 import csv
+import json
 from flask import Flask, request, jsonify, render_template
 from shapely.geometry import Polygon, Point
+from datetime import datetime
 
 app = Flask(__name__)
+
+# Diretório para armazenar os arquivos de minas
+os.makedirs('mines', exist_ok=True)
 
 # Carregar os polígonos de um arquivo CSV
 poligonos = []
@@ -18,6 +24,18 @@ with open('poligonos.csv', 'r') as f:
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/map', methods=['GET'])
+def map_page():
+    return render_template('map.html')
+
+@app.route('/criador-de-poligono', methods=['GET'])
+def criador_de_poligono():
+    return render_template('criador-de-poligono.html')
+
+@app.route('/get-poligonos', methods=['GET'])
+def get_poligonos():
+    return jsonify(poligonos)
 
 @app.route('/verificar-ponto', methods=['POST'])
 def verificar_ponto():
@@ -44,36 +62,49 @@ def verificar_ponto():
         "ID": ponto_id,
         "ponto_teste": ponto_teste,
         "status": "OUT",
-        "poligono": "null"
+        "poligono": None
     })
 
-@app.route('/visualizar-poligonos')
-def visualizar_poligonos():
-    return render_template('map.html', poligonos=poligonos)
+@app.route('/create-mine', methods=['POST'])
+def create_mine():
+    data = request.get_json()
+    ponto_teste = data.get('ponto_teste')
+    ponto_id = data.get('ID')
 
-@app.route('/criador-de-poligono')
-def criador_de_poligono():
-    return render_template('criador-de-poligono.html')
+    if not ponto_teste or not ponto_id:
+        return jsonify({"error": "ID e ponto_teste são obrigatórios."}), 400
 
-@app.route('/get-poligonos', methods=['GET'])
-def get_poligonos():
-    try:
-        poligonos = []
-        with open('poligonos.csv', 'r') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                # Converter as coordenadas do formato string para lista de listas
-                coordenadas = eval(row["coordenadas"])  # Mantém compatibilidade com o formato atual
-                poligonos.append({
-                    "nome": row["nome"],
-                    "coordenadas": coordenadas,  # Enviar como lista de listas
-                    "cor": row["cor"]
-                })
-        return jsonify(poligonos)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Verifica o ponto usando a função verificar_ponto()
+    ponto_data = verificar_ponto().get_json()
 
+    if ponto_data["status"] == "OUT":
+        return jsonify({"message": "Ponto fora de todos os polígonos."})
 
+    # Dados do ponto dentro de um polígono
+    nome_poligono = ponto_data["poligono"]
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Caminho do arquivo na pasta mines
+    mine_file = os.path.join('mines', f"{ponto_id}.csv")
+
+    # Escreve ou adiciona no arquivo CSV
+    file_exists = os.path.isfile(mine_file)
+    with open(mine_file, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not file_exists:
+            # Escreve o cabeçalho do CSV
+            writer.writerow(["nome", "coordenadas", "timestamp"])
+        writer.writerow([nome_poligono, ponto_teste, timestamp])
+
+    return jsonify({
+        "message": "Ponto registrado na mina.",
+        "file": mine_file,
+        "data": {
+            "nome": nome_poligono,
+            "coordenadas": ponto_teste,
+            "timestamp": timestamp
+        }
+    })
 
 if __name__ == '__main__':
     app.run(debug=True)
