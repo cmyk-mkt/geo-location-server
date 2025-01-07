@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Mine</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: auto;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            cursor: pointer;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Create Mine</h1>
+    <form id="mineForm">
+        <label for="id">ID</label>
+        <input type="text" id="id" name="id" placeholder="Enter ID" required />
+
+        <label for="latitude">Latitude</label>
+        <input type="number" id="latitude" name="latitude" step="any" placeholder="Enter Latitude" required />
+
+        <label for="longitude">Longitude</label>
+        <input type="number" id="longitude" name="longitude" step="any" placeholder="Enter Longitude" required />
+
+        <button type="button" id="submitBtn">Create Mine</button>
+    </form>
+
+    <div id="response" style="display:none;"></div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async function () {
+            // Get form values
+            const id = document.getElementById('id').value;
+            const latitude = parseFloat(document.getElementById('latitude').value);
+            const longitude = parseFloat(document.getElementById('longitude').value);
+
+            // Validate inputs
+            if (!id || isNaN(latitude) || isNaN(longitude)) {
+                alert("Please fill out all fields correctly.");
+                return;
+            }
+
+            // Create JSON payload
+            const payload = {
+                ID: id,
+                ponto_teste: [latitude, longitude]
+            };
+
+            try {
+                // Send POST request
+                const response = await fetch('/create-mine', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // Process response
+                const result = await response.json();
+                const responseDiv = document.getElementById('response');
+                responseDiv.style.display = 'block';
+
+                if (response.ok) {
+                    responseDiv.innerHTML = `<strong>Success:</strong> ${JSON.stringify(result, null, 2)}`;
+                } else {
+                    responseDiv.innerHTML = `<strong>Error:</strong> ${JSON.stringify(result, null, 2)}`;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("An error occurred while creating the mine.");
+            }
+        });
+    </script>
+</body>
+</html>
