@@ -29,8 +29,8 @@ def home():
 def map_page():
     return render_template('map.html')
 
-@app.route('/criar-mina', methods=['GET'])
-def criador_de_mina():
+@app.route('/create-mine-page', methods=['GET'])
+def create_mine_page():
     return render_template('create-mine.html')
 
 @app.route('/criador-de-poligono', methods=['GET'])
