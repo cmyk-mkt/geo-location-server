@@ -110,5 +110,32 @@ def create_mine():
         }
     })
 
+
+@app.route('/list-mines-by-id', methods=['POST'])
+def list_mines_by_id():
+    data = request.get_json()
+    mine_id = data.get('ID')
+
+    if not mine_id:
+        return jsonify({"error": "ID is required."}), 400
+
+    file_path = f"mines/mines_{mine_id}.csv"
+    mines = []
+
+    try:
+        with open(file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                mines.append({
+                    "nome": row["nome"],
+                    "coordenadas": row["coordenadas"],
+                    "timestamp": row["timestamp"]
+                })
+    except FileNotFoundError:
+        return jsonify({"mines": []}), 200
+
+    return jsonify({"mines": mines}), 200
+
+
 if __name__ == '__main__':
     app.run(debug=True)
