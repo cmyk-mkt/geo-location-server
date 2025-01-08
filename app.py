@@ -30,7 +30,7 @@ def map_page():
     return render_template('map.html')
 
 @app.route('/criar-mina', methods=['GET'])
-def criador_de_poligono():
+def criador_de_mina():
     return render_template('create-mine.html')
 
 @app.route('/criador-de-poligono', methods=['GET'])
