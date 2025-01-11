@@ -119,8 +119,12 @@ def list_mines_by_id():
     if not mine_id:
         return jsonify({"error": "ID is required."}), 400
 
-    # Log the content of the /mines directory
+    # Caminho do diretório de mines
     mines_dir = "mines"
+    file_name = f"mine_{mine_id}.csv"  # Adiciona o prefixo "mine_" ao ID
+    file_path = os.path.join(mines_dir, file_name)
+
+    # Log para depuração: Conteúdo da pasta mines
     try:
         files = os.listdir(mines_dir)
         print(f"Contents of '/mines': {files}")
@@ -128,21 +132,35 @@ def list_mines_by_id():
         print("The '/mines' directory does not exist.")
         return jsonify({"error": "Mines directory not found."}), 500
 
-    file_path = f"{mines_dir}/mines_{mine_id}.csv"
+    # Inicializa a lista para armazenar as minas
     mines = []
 
     try:
         with open(file_path, 'r') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                mines.append({
-                    "nome": row["nome"],
-                    "coordenadas": eval(row["coordenadas"]),
-                    "timestamp": row["timestamp"]
-                })
-    except FileNotFoundError:
-        return jsonify({"mines": []}), 200
+                # Validação para garantir que as colunas necessárias estejam presentes
+                try:
+                    nome = row["nome"]
+                    coordenadas = eval(row["coordenadas"])  # Conversão segura para lista
+                    timestamp = row["timestamp"]
+                    mines.append({
+                        "nome": nome,
+                        "coordenadas": coordenadas,
+                        "timestamp": timestamp
+                    })
+                except KeyError as e:
+                    print(f"Error reading file {file_name}: Missing column {e}")
+                    return jsonify({"error": f"Invalid CSV format in {file_name}."}), 500
 
+    except FileNotFoundError:
+        print(f"File not found: {file_path}")
+        return jsonify({"mines": []}), 200  # Retorna uma lista vazia se o arquivo não for encontrado
+    except Exception as e:
+        print(f"Error reading file {file_path}: {e}")
+        return jsonify({"error": f"Error reading file {file_name}."}), 500
+
+    # Retorna as minas encontradas no arquivo CSV
     return jsonify({"mines": mines}), 200
 
 
