@@ -78,37 +78,43 @@ def create_mine():
     if not ponto_teste or not ponto_id:
         return jsonify({"error": "ID e ponto_teste são obrigatórios."}), 400
 
-    # Verifica o ponto usando a função verificar_ponto()
-    ponto_data = verificar_ponto().get_json()
+    ponto = Point(ponto_teste)
 
-    if ponto_data["status"] == "OUT":
-        return jsonify({"message": "Ponto fora de todos os polígonos."})
+    for poligono in poligonos:
+        poligono_obj = Polygon(poligono["coordenadas"])
+        if poligono_obj.contains(ponto):
+            # Nome do arquivo com prefixo 'mine_'
+            mines_dir = "mines"
+            os.makedirs(mines_dir, exist_ok=True)  # Cria o diretório se não existir
+            file_path = os.path.join(mines_dir, f"mine_{ponto_id}.csv")
 
-    # Dados do ponto dentro de um polígono
-    nome_poligono = ponto_data["poligono"]
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            # Dados a serem salvos
+            row = {
+                "nome": poligono["nome"],
+                "coordenadas": str(ponto_teste),
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
 
-    # Caminho do arquivo na pasta mines
-    mine_file = os.path.join('mines', f"{ponto_id}.csv")
+            # Criar ou adicionar ao arquivo CSV
+            file_exists = os.path.isfile(file_path)
+            with open(file_path, 'a', newline='') as csvfile:
+                fieldnames = ["nome", "coordenadas", "timestamp"]
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
-    # Escreve ou adiciona no arquivo CSV
-    file_exists = os.path.isfile(mine_file)
-    with open(mine_file, 'a', newline='') as f:
-        writer = csv.writer(f)
-        if not file_exists:
-            # Escreve o cabeçalho do CSV
-            writer.writerow(["nome", "coordenadas", "timestamp"])
-        writer.writerow([nome_poligono, ponto_teste, timestamp])
+                if not file_exists:
+                    writer.writeheader()  # Escreve cabeçalho se o arquivo não existir
+                writer.writerow(row)
+
+            return jsonify({
+                "message": "Ponto registrado na mina.",
+                "file": file_path,
+                "data": row
+            }), 201
 
     return jsonify({
-        "message": "Ponto registrado na mina.",
-        "file": mine_file,
-        "data": {
-            "nome": nome_poligono,
-            "coordenadas": ponto_teste,
-            "timestamp": timestamp
-        }
-    })
+        "message": "Ponto fora de qualquer polígono.",
+        "status": "OUT"
+    }), 200
 
 
 @app.route('/list-mines-by-id', methods=['POST'])
