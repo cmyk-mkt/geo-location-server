@@ -119,7 +119,16 @@ def list_mines_by_id():
     if not mine_id:
         return jsonify({"error": "ID is required."}), 400
 
-    file_path = f"mines/mines_{mine_id}.csv"
+    # Log the content of the /mines directory
+    mines_dir = "mines"
+    try:
+        files = os.listdir(mines_dir)
+        print(f"Contents of '/mines': {files}")
+    except FileNotFoundError:
+        print("The '/mines' directory does not exist.")
+        return jsonify({"error": "Mines directory not found."}), 500
+
+    file_path = f"{mines_dir}/mines_{mine_id}.csv"
     mines = []
 
     try:
@@ -128,7 +137,7 @@ def list_mines_by_id():
             for row in reader:
                 mines.append({
                     "nome": row["nome"],
-                    "coordenadas": row["coordenadas"],
+                    "coordenadas": eval(row["coordenadas"]),
                     "timestamp": row["timestamp"]
                 })
     except FileNotFoundError:
